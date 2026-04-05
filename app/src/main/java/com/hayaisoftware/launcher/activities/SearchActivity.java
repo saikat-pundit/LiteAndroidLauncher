@@ -247,9 +247,6 @@ public class SearchActivity extends Activity
         mIsCacheClear = false;
         mSearchEditText.setText("");
         mSearchEditText.clearFocus();
-        if (mAutoKeyboard) {
-            mSearchEditText.requestFocus();
-        }
     }
 
     public int setPaddingHeights() {
