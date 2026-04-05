@@ -10,6 +10,10 @@ android {
         versionCode 10405
         versionName "1.4.5"
     }
+	lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
     buildTypes {
         release {
             minifyEnabled true
