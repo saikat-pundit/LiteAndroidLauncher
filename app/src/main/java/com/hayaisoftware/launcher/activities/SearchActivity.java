@@ -219,7 +219,15 @@ public class SearchActivity extends Activity
         //loadShareableApps();
         setupImageLoadingThreads(resources);
         setupViews();
-
+        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName componentName = new ComponentName(this, LauncherDeviceAdminReceiver.class);
+        if (!dpm.isAdminActive(componentName)) {
+            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName);
+            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, 
+                    "Please enable this to prevent accidental uninstallation of the Launcher.");
+            startActivity(intent);
+        }
     }
 
     private void loadShareableApps() {
