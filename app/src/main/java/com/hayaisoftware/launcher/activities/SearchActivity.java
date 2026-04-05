@@ -275,23 +275,7 @@ public class SearchActivity extends Activity
     @Override
     protected void onPostResume() {
         super.onPostResume();
-
-        if (mAutoKeyboard) {
-            showKeyboard();
-
-            //HACK putting showKeyboard event to the end of the Ui Thread running queue
-            // to make sure the keyboard opens.
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showKeyboard();
-                }
-            });
-        } else {
-            hideKeyboard();
-        }
-
-
+        hideKeyboard();
     }
 
     private void setupViews() {
