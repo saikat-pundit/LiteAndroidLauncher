@@ -3,13 +3,18 @@ name: Android CI/CD
 on:
   workflow_dispatch: # Manual trigger
  
+# Grant the workflow permission to create/update releases
+permissions:
+  contents: write
+
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # IMPORTANT: Kept Java 8 for your specific legacy project compatibility
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
@@ -17,38 +22,28 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Grant execute permission
+      - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # Build the Release APK (bypassing lint errors as configured in your build.gradle)
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      # Internal artifact for the next job
-      - name: Upload APK for Release
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: app/build/outputs/apk/release/*.apk
+      - name: Rename APK
+        run: |
+          # Find the generated release APK file
+          APK_FILE=$(find app/build/outputs -name "*.apk" | head -n 1)
+          # Rename and move it to the root for easier access
+          mv "$APK_FILE" HayaiLauncher-Release.apk
 
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download APK from Build Job
-        uses: actions/download-artifact@v4
+      # Upload the APK to the Releases page (Rolling "latest" release)
+      - name: Upload to GitHub Release
+        uses: ncipollo/release-action@v1
         with:
-          name: release-apk
-          path: release-binaries # Downloads into this folder
-
-      - name: Create Release and Upload APK
-        uses: softprops/action-gh-release@v2
-        with:
-          # This uploads the raw .apk file, not a zip
-          files: release-binaries/*.apk
-          generate_release_notes: true
-          body: "Official release for version ${{ github.ref_name }}. Source code is attached below."
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "HayaiLauncher-Release.apk"
+          tag: "latest"
+          name: "Latest Build"
+          body: "Automated release build of Hayai Launcher."
+          allowUpdates: true        # Updates the existing 'latest' release instead of failing
+          replacesArtifacts: true   # Deletes the old APK and uploads the new one
+          token: ${{ secrets.GITHUB_TOKEN }}
