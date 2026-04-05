@@ -33,12 +33,12 @@ jobs:
         run: |
           # 2. Update the path to look for the debug APK
           APK_FILE=$(find app/build/outputs -name "*.apk" | grep -i debug | head -n 1)
-          mv "$APK_FILE" HayaiLauncher-Debug.apk
+          mv "$APK_FILE" LiteLauncher.apk
 
       - name: Upload to GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "HayaiLauncher-Debug.apk"
+          artifacts: "LiteLauncher.apk"
           tag: "latest"
           name: "Latest Build"
           body: "Automated release build of Hayai Launcher."
