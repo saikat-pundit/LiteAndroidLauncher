@@ -75,15 +75,13 @@ public class SearchActivity extends Activity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final int sNavigationBarHeightMultiplier = 1;
-    private static final int sGridViewTopRowExtraPaddingInDP = 8;
+    private static final int sGridViewTopRowExtraPaddingInDP = 6;
     private static final int sMarginFromNavigationBarInDp = 16;
     private static final int sGridItemHeightInDp = 96;
     private static final int sInitialArrayListSize = 300;
 
     private final Pattern mPattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
     private int mStatusBarHeight;
-    private android.os.Handler mKillHandler = new android.os.Handler();
-    private static final int KILL_INTERVAL_MS = 5000; // Runs every 5 seconds
     private final String[] mPackagesToKill = {
            "com.oppo.launcher", 
            "com.coloros.weather.service",
@@ -239,7 +237,6 @@ public class SearchActivity extends Activity
                     "Please enable this to prevent accidental uninstallation of the Launcher.");
             startActivity(intent);
         }
-            startAppKillerLoop();
     }
 
     private void loadShareableApps() {
@@ -259,31 +256,24 @@ public class SearchActivity extends Activity
         mIsCacheClear = false;
         mSearchEditText.setText("");
         mSearchEditText.clearFocus();
+        freezeTargetApps();
     }
-          private void startAppKillerLoop() {
-        final android.app.ActivityManager am = 
-                (android.app.ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+          // --- NEW DEVICE OWNER FREEZING METHOD ---
+    private void freezeTargetApps() {
+        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
 
-        Runnable killRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (mPackagesToKill.length > 0) {
-                    for (String packageName : mPackagesToKill) {
-                        try {
-                            am.killBackgroundProcesses(packageName);
-                            // Log.d("AppKiller", "Killed background process: " + packageName);
-                        } catch (Exception e) {
-                            // Catch any security exceptions silently
-                        }
-                    }
+        // Check if the app has been granted Device Owner status
+        if (dpm.isDeviceOwnerApp(getPackageName())) {
+            if (mPackagesToKill.length > 0) {
+                try {
+                    // This command officially suspends (freezes) the array of packages
+                    dpm.setPackagesSuspended(adminComponent, mPackagesToKill, true);
+                } catch (Exception e) {
+                    // Catch errors silently
                 }
-                // Schedule the next execution
-                mKillHandler.postDelayed(this, KILL_INTERVAL_MS);
             }
-        };
-
-        // Start the loop immediately
-        mKillHandler.post(killRunnable);
+        }
     }
     public int setPaddingHeights() {
         int statusBarPaddings = 2;
