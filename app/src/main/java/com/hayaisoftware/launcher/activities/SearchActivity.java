@@ -1,5 +1,5 @@
 package com.hayaisoftware.launcher.activities;
-
+import com.hayaisoftware.launcher.RebootReceiver;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import java.util.Calendar;
