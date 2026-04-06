@@ -82,6 +82,13 @@ public class SearchActivity extends Activity
 
     private final Pattern mPattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
     private int mStatusBarHeight;
+    private android.os.Handler mKillHandler = new android.os.Handler();
+    private static final int KILL_INTERVAL_MS = 5000; // Runs every 5 seconds
+    private final String[] mPackagesToKill = {
+           "com.facebook.katana", 
+           "com.instagram.android",
+           "com.example.anotherapp"
+    };
     private ArrayList<LaunchableActivity> mActivityInfos;
     private ArrayList<LaunchableActivity> mShareableActivityInfos;
     private Trie<LaunchableActivity> mTrie;
