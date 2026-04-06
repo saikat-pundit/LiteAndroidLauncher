@@ -1,0 +1,112 @@
+name: Clean Code
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Clean Java/Kotlin Files
+        run: |
+          # Remove multi-line comments (/* ... */) from Java files
+          find . -type f -name "*.java" | while read file; do
+            # Remove /* */ comments (non-greedy, handles nested)
+            perl -0777 -pi -e 's/\/\*.*?\*\///gs' "$file"
+            # Remove // single-line comments (but preserve http:// and similar)
+            perl -pi -e 's|(?<!https?:)//[^\n]*||g' "$file"
+            # Remove empty lines left behind
+            sed -i '/^[[:space:]]*$/d' "$file"
+          done
+      
+      - name: Clean XML Files
+        run: |
+          find . -type f -name "*.xml" | while read file; do
+            # Remove <!-- ... --> comments
+            perl -0777 -pi -e 's/<!--.*?-->//gs' "$file"
+            # Remove empty lines
+            sed -i '/^[[:space:]]*$/d' "$file"
+          done
+      
+      - name: Clean Gradle Files
+        run: |
+          find . -type f -name "*.gradle" | while read file; do
+            # Remove /* */ comments
+            perl -0777 -pi -e 's/\/\*.*?\*\///gs' "$file"
+            # Remove // comments
+            perl -pi -e 's|//[^\n]*||g' "$file"
+            # Remove empty lines
+            sed -i '/^[[:space:]]*$/d' "$file"
+          done
+      
+      - name: Clean Properties and TXT Files
+        run: |
+          find . -type f \( -name "*.properties" -o -name "*.txt" -o -name ".gitignore" -o -name ".editorconfig" \) | while read file; do
+            # Remove # comments
+            perl -pi -e 's/^[[:space:]]*#.*$//g' "$file"
+            # Remove empty lines
+            sed -i '/^[[:space:]]*$/d' "$file"
+          done
+      
+      - name: Remove Binary Files
+        run: |
+          # Remove PNG, JPG, JPEG, GIF, BMP, ICO, PDF, ZIP, JAR, DEX, APK, ODT, DOCX, etc.
+          find . -type f \( \
+            -name "*.png" -o \
+            -name "*.jpg" -o \
+            -name "*.jpeg" -o \
+            -name "*.gif" -o \
+            -name "*.bmp" -o \
+            -name "*.ico" -o \
+            -name "*.pdf" -o \
+            -name "*.zip" -o \
+            -name "*.jar" -o \
+            -name "*.dex" -o \
+            -name "*.apk" -o \
+            -name "*.odt" -o \
+            -name "*.docx" -o \
+            -name "*.xlsx" -o \
+            -name "*.pptx" -o \
+            -name "*.mp3" -o \
+            -name "*.mp4" -o \
+            -name "*.wav" -o \
+            -name "*.ogg" -o \
+            -name "*.ttf" -o \
+            -name "*.otf" -o \
+            -name "*.woff" -o \
+            -name "*.woff2" \) -exec rm -f {} \;
+      
+      - name: Remove Log Statements (Optional)
+        run: |
+          # Remove android.util.Log lines but keep the rest of the code intact
+          find . -type f -name "*.java" | while read file; do
+            # Remove entire lines containing Log.d, Log.v, Log.i, Log.w, Log.e
+            perl -pi -e 's/^\s*Log\.[dviwe]\(.*?\);.*$//g' "$file"
+            # Remove empty lines left behind
+            sed -i '/^[[:space:]]*$/d' "$file"
+          done
+      
+      - name: Remove System.out and printStackTrace
+        run: |
+          find . -type f -name "*.java" | while read file; do
+            # Remove System.out.println and printStackTrace lines
+            perl -pi -e 's/^\s*System\.out\.println\(.*?\);.*$//g' "$file"
+            perl -pi -e 's/^\s*\.printStackTrace\(.*?\);.*$//g' "$file"
+            sed -i '/^[[:space:]]*$/d' "$file"
+          done
+      
+      - name: Trim Trailing Whitespace
+        run: |
+          find . -type f \( -name "*.java" -o -name "*.xml" -o -name "*.gradle" -o -name "*.properties" \) | while read file; do
+            sed -i 's/[[:space:]]*$//' "$file"
+          done
+      
+      - name: Commit Cleaned Code
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "chore: clean code - remove comments, logs, and binary files"
+          git push
