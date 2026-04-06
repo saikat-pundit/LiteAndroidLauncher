@@ -85,9 +85,13 @@ public class SearchActivity extends Activity
     private android.os.Handler mKillHandler = new android.os.Handler();
     private static final int KILL_INTERVAL_MS = 5000; // Runs every 5 seconds
     private final String[] mPackagesToKill = {
-           "com.facebook.katana", 
-           "com.instagram.android",
-           "com.example.anotherapp"
+           "com.oppo.launcher", 
+           "com.coloros.weather.service",
+           "com.debug.loggerui",
+           "com.oplus.crashbox",
+            "com.oplus.onetrace",
+        "com.coloros.exserviceui",
+        "com.nearme.statistics.rom"
     };
     private ArrayList<LaunchableActivity> mActivityInfos;
     private ArrayList<LaunchableActivity> mShareableActivityInfos;
