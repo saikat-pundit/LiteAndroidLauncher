@@ -318,7 +318,9 @@ public class SearchActivity extends Activity
         }
     }
     public int setPaddingHeights() {
-        int statusBarPaddings = 2;
+        // 1. Change this from 2 to 1 to drastically reduce the top gap
+        int statusBarPaddings = 1; 
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 
             final Window window = getWindow();
@@ -326,9 +328,15 @@ public class SearchActivity extends Activity
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
+            // 2. ADD THIS: Force the status bar to be 100% transparent (removes the dark tint)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+            }
+
             final View statusBarDummy = findViewById(R.id.statusBarDummyView);
             statusBarDummy.getLayoutParams().height = mStatusBarHeight;
-            statusBarPaddings++;
+            
+            // 3. REMOVE the statusBarPaddings++; line that used to be here
         }
 
         final View topFillerView = findViewById(R.id.topFillerView);
