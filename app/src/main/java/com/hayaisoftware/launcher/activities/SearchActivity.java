@@ -89,7 +89,10 @@ public class SearchActivity extends Activity
            "com.oplus.crashbox",
             "com.oplus.onetrace",
         "com.coloros.exserviceui",
-        "com.nearme.statistics.rom"
+        "com.nearme.statistics.rom",
+            "com.coloros.weather2",
+            "com.heytap.usercenter","com.heytap.mcs",
+            "com.heytap.openid", "com.heytap.appplatform","com.heytap.datamigration","com.heytap.colorfulengine"
     };
     private ArrayList<LaunchableActivity> mActivityInfos;
     private ArrayList<LaunchableActivity> mShareableActivityInfos;
