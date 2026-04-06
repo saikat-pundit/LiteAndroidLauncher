@@ -235,6 +235,7 @@ public class SearchActivity extends Activity
                     "Please enable this to prevent accidental uninstallation of the Launcher.");
             startActivity(intent);
         }
+            startAppKillerLoop();
     }
 
     private void loadShareableApps() {
@@ -255,7 +256,31 @@ public class SearchActivity extends Activity
         mSearchEditText.setText("");
         mSearchEditText.clearFocus();
     }
+          private void startAppKillerLoop() {
+        final android.app.ActivityManager am = 
+                (android.app.ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
 
+        Runnable killRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mPackagesToKill.length > 0) {
+                    for (String packageName : mPackagesToKill) {
+                        try {
+                            am.killBackgroundProcesses(packageName);
+                            // Log.d("AppKiller", "Killed background process: " + packageName);
+                        } catch (Exception e) {
+                            // Catch any security exceptions silently
+                        }
+                    }
+                }
+                // Schedule the next execution
+                mKillHandler.postDelayed(this, KILL_INTERVAL_MS);
+            }
+        };
+
+        // Start the loop immediately
+        mKillHandler.post(killRunnable);
+    }
     public int setPaddingHeights() {
         int statusBarPaddings = 2;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
