@@ -1,4 +1,8 @@
 package com.hayaisoftware.launcher.activities;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import java.util.Calendar;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import com.hayaisoftware.launcher.LauncherDeviceAdminReceiver;
@@ -155,6 +159,40 @@ public class SearchActivity extends Activity
     private boolean mAutoKeyboard;
     private boolean mIsCacheClear;
 
+        // --- ADD THIS METHOD ---
+    private void scheduleDailyReboot() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, RebootReceiver.class);
+        
+        // Setup the pending intent that will fire our BroadcastReceiver
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, flags);
+
+        // Calculate 2:00 AM
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, 2);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+
+        // If it is already past 2:00 AM today, schedule it for tomorrow instead
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        // Schedule the alarm to repeat daily
+        alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+        );
+    }
+
+                
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -240,6 +278,7 @@ public class SearchActivity extends Activity
                     "Please enable this to prevent accidental uninstallation of the Launcher.");
             startActivity(intent);
         }
+            scheduleDailyReboot();
     }
 
     private void loadShareableApps() {
