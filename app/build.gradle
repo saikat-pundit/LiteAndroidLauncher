@@ -9,6 +9,7 @@ android {
         targetSdkVersion 25
         versionCode 10405
         versionName "1.4.5"
+		resConfigs "en"
     }
 	lintOptions {
         checkReleaseBuilds false
