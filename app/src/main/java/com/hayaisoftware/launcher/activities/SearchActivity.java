@@ -1,4 +1,7 @@
 package com.hayaisoftware.launcher.activities;
+import android.os.Handler;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.widget.Toast;
 import android.view.MotionEvent;
 import android.os.SystemClock;
@@ -113,6 +116,10 @@ public class SearchActivity extends Activity
     private EditText mSearchEditText;
     private View mClearButton;
     private int mNumOfCores;
+    private GestureDetector mGestureDetector;
+        private Handler mDoubleTapHandler = new Handler();
+        private Runnable mDoubleTapRunnable;
+        private static final int DOUBLE_TAP_TIMEOUT = 1000;
     private BroadcastReceiver mPackageChangedReceiver;
     private Comparator<LaunchableActivity> mPinToTopComparator;
     private Comparator<LaunchableActivity> mRecentOrderComparator;
@@ -227,6 +234,17 @@ public class SearchActivity extends Activity
         loadLaunchableApps();
         setupImageLoadingThreads(resources);
         setupViews();
+mGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+    @Override
+    public boolean onDoubleTap(MotionEvent e) {
+        int position = ((GridView) mAppListView).pointToPosition((int) e.getX(), (int) e.getY());
+        if (position == AdapterView.INVALID_POSITION) {
+            lockScreen();
+            return true;
+        }
+        return false;
+    }
+});
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName componentName = new ComponentName(this, LauncherDeviceAdminReceiver.class);
         if (!dpm.isAdminActive(componentName)) {
@@ -340,19 +358,31 @@ public class SearchActivity extends Activity
                                  int visibleItemCount, int totalItemCount) {
             }
         });
-mAppListView.setOnTouchListener(new View.OnTouchListener() {
+// Initialize gesture detector in onCreate after setupViews() call
+mGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
     @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            int position = ((GridView) mAppListView).pointToPosition((int) event.getX(), (int) event.getY());
-            if (position == AdapterView.INVALID_POSITION) {
-                lockScreen();
-                return true;
-            }
+    public boolean onDoubleTap(MotionEvent e) {
+        // Check if double tap is on empty space
+        int position = ((GridView) mAppListView).pointToPosition((int) e.getX(), (int) e.getY());
+        if (position == AdapterView.INVALID_POSITION) {
+            lockScreen();
+            return true;
         }
         return false;
     }
-});    
+    
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent e) {
+        return false;
+    }
+});
+
+mAppListView.setOnTouchListener(new View.OnTouchListener() {
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        return mGestureDetector.onTouchEvent(event);
+    }
+});  
         mAppListView.setAdapter(mArrayAdapter);
         mAppListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
