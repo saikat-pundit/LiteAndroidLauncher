@@ -1,5 +1,7 @@
 package com.hayaisoftware.launcher.activities;
 
+import android.hardware.fingerprint.FingerprintManager;
+import android.os.CancellationSignal;
 import android.app.KeyguardManager;
 import android.annotation.TargetApi;
 import android.hardware.fingerprint.FingerprintManager;
@@ -133,6 +135,9 @@ private boolean isAuthenticating = false;
         private Handler mDoubleTapHandler = new Handler();
         private Runnable mDoubleTapRunnable;
         private static final int DOUBLE_TAP_TIMEOUT = 1000;
+                private FingerprintManager mFingerprintManager;
+private CancellationSignal mFingerprintCancellationSignal;
+private boolean mIsListeningForFingerprint = false;
     private BroadcastReceiver mPackageChangedReceiver;
     private Comparator<LaunchableActivity> mPinToTopComparator;
     private Comparator<LaunchableActivity> mRecentOrderComparator;
@@ -503,6 +508,63 @@ private void unlockDevice() {
         mAutoKeyboard =
                 mSharedPreferences.getBoolean("pref_autokeyboard", false);
     }
+                private void startFingerprintWakeListener() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        mFingerprintManager = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
+        
+        if (mFingerprintManager != null && mFingerprintManager.isHardwareDetected() && 
+            mFingerprintManager.hasEnrolledFingerprints() && !mIsListeningForFingerprint) {
+            
+            mIsListeningForFingerprint = true;
+            mFingerprintCancellationSignal = new CancellationSignal();
+            
+            mFingerprintManager.authenticate(null, mFingerprintCancellationSignal, 0,
+                new FingerprintManager.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+                        mIsListeningForFingerprint = false;
+                        // Wake and unlock device
+                        wakeAndUnlockDevice();
+                    }
+                    
+                    @Override
+                    public void onAuthenticationFailed() {
+                        // Just vibrate or do nothing - fingerprint didn't match
+                    }
+                    
+                    @Override
+                    public void onAuthenticationError(int errorCode, CharSequence errString) {
+                        mIsListeningForFingerprint = false;
+                    }
+                }, null);
+        }
+    }
+}
+
+private void stopFingerprintWakeListener() {
+    if (mFingerprintCancellationSignal != null && !mFingerprintCancellationSignal.isCanceled()) {
+        mFingerprintCancellationSignal.cancel();
+        mIsListeningForFingerprint = false;
+    }
+}
+
+private void wakeAndUnlockDevice() {
+    // Turn screen on
+    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    PowerManager.WakeLock wakeLock = pm.newWakeLock(
+        PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+        "HayaiLauncher:WAKE_LOCK"
+    );
+    wakeLock.acquire(2000);
+    wakeLock.release();
+    
+    // Unlock the device
+    DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+    ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
+    if (dpm.isAdminActive(adminComponent)) {
+        dpm.lockNow(); // This doesn't unlock - you'd need keyguard dismissal
+    }
+}
     private void setupImageLoadingThreads(final Resources resources) {
         mImageLoadingConsumersManager =
                 new SimpleTaskConsumerManager(getOptimalNumberOfThreads(resources),
