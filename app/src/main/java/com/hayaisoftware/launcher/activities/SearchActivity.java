@@ -451,10 +451,12 @@ private void startFingerprintAuthentication() {
             @Override
             public void onAuthenticationFailed() {
                 isAuthenticating = false;
-                // Optionally show toast
-                runOnUiThread(() -> 
-                    Toast.makeText(SearchActivity.this, "Fingerprint not recognized", Toast.LENGTH_SHORT).show()
-                );
+                runOnUiThread(new Runnable() {
+    @Override
+    public void run() {
+        Toast.makeText(SearchActivity.this, "Fingerprint not recognized", Toast.LENGTH_SHORT).show();
+    }
+});
             }
             
             @Override
