@@ -1,4 +1,5 @@
 package com.hayaisoftware.launcher.activities;
+import android.widget.Toast;
 import android.view.MotionEvent;
 import android.os.SystemClock;
 import android.app.admin.DevicePolicyManager;
@@ -272,11 +273,12 @@ public class SearchActivity extends Activity
     if (dpm.isAdminActive(adminComponent)) {
         dpm.lockNow();
     } else {
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            pm.goToSleep(SystemClock.uptimeMillis());
-        }
-    }
+    Toast.makeText(this, "Enable device admin for screen lock", Toast.LENGTH_SHORT).show();
+    Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+    ComponentName componentName = new ComponentName(this, LauncherDeviceAdminReceiver.class);
+    intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, componentName);
+    startActivity(intent);
+}
 }            
     public int setPaddingHeights() {
         int statusBarPaddings = 1; 
