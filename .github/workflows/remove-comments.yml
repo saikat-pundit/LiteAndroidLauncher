@@ -1,0 +1,49 @@
+name: Remove Comments and Copyrights
+
+on:
+  workflow_dispatch:
+
+jobs:
+  remove-comments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Remove Java/Copyright Comments
+        run: |
+          # Remove /* ... */ style comments (multiline) - but preserve license headers carefully
+          find app/src/main/java -name "*.java" -exec sed -i '/^\/\*.*Copyright/,/\*\//d' {} \;
+          
+          # Remove remaining /* ... */ that span single line
+          find app/src/main/java -name "*.java" -exec sed -i 's/\/\*.*\*\///g' {} \;
+          
+          # Remove // style comments (but not URLs or code with //)
+          find app/src/main/java -name "*.java" -exec sed -i 's/\/\/[^"].*$//g' {} \;
+          
+          # Remove empty lines left behind (multiple blank lines to single)
+          find app/src/main/java -name "*.java" -exec sed -i '/^$/N;/^\n$/D' {} \;
+      
+      - name: Remove XML Comments
+        run: |
+          # Remove <!-- ... --> XML comments
+          find app/src/main/res -name "*.xml" -exec sed -i 's/<!--.*-->//g' {} \;
+          find app/src/main/res -name "*.xml" -exec sed -i '/<!--/,/-->/d' {} \;
+      
+      - name: Remove Gradle Comments
+        run: |
+          # Remove // comments in gradle files
+          sed -i 's/\/\/.*$//g' *.gradle app/*.gradle 2>/dev/null || true
+          
+      - name: Remove EditorConfig Comments
+        run: |
+          # Remove # comments from .editorconfig
+          sed -i '/^[[:space:]]*#/d' .editorconfig
+          sed -i 's/#.*$//' .editorconfig
+          
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add -A
+          git commit -m "Remove comments and copyright headers" || echo "No changes to commit"
+          git push || echo "No changes to push"
