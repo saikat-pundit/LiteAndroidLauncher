@@ -1,4 +1,12 @@
 package com.hayaisoftware.launcher.activities;
+
+import android.hardware.fingerprint.FingerprintManager;
+import android.os.CancellationSignal;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+import java.security.KeyStore;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import android.os.Handler;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
@@ -117,6 +125,9 @@ public class SearchActivity extends Activity
     private View mClearButton;
     private int mNumOfCores;
     private GestureDetector mGestureDetector;
+                private FingerprintManager mFingerprintManager;
+private CancellationSignal mCancellationSignal;
+private boolean isAuthenticating = false;
         private Handler mDoubleTapHandler = new Handler();
         private Runnable mDoubleTapRunnable;
         private static final int DOUBLE_TAP_TIMEOUT = 1000;
@@ -265,6 +276,14 @@ mGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGesture
         }
         updateApps(mShareableActivityInfos, false);
     }
+                @Override
+protected void onPause() {
+    super.onPause();
+    if (mCancellationSignal != null && !mCancellationSignal.isCanceled()) {
+        mCancellationSignal.cancel();
+        isAuthenticating = false;
+    }
+}
     @Override
     protected void onResume() {
         super.onResume();
@@ -400,6 +419,68 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         }
         return false;
     }
+                private void setupFingerprintUnlock() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        mFingerprintManager = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
+        
+        if (mFingerprintManager != null && mFingerprintManager.isHardwareDetected() && 
+            mFingerprintManager.hasEnrolledFingerprints()) {
+            
+            // Device has fingerprint hardware and enrolled fingerprints
+            startFingerprintAuthentication();
+        }
+    }
+}
+
+@TargetApi(Build.VERSION_CODES.M)
+private void startFingerprintAuthentication() {
+    if (isAuthenticating) return;
+    
+    mCancellationSignal = new CancellationSignal();
+    isAuthenticating = true;
+    
+    mFingerprintManager.authenticate(null, mCancellationSignal, 0,
+        new FingerprintManager.AuthenticationCallback() {
+            @Override
+            public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+                isAuthenticating = false;
+                // Unlock the device
+                unlockDevice();
+            }
+            
+            @Override
+            public void onAuthenticationFailed() {
+                isAuthenticating = false;
+                // Optionally show toast
+                runOnUiThread(() -> 
+                    Toast.makeText(SearchActivity.this, "Fingerprint not recognized", Toast.LENGTH_SHORT).show()
+                );
+            }
+            
+            @Override
+            public void onAuthenticationError(int errorCode, CharSequence errString) {
+                isAuthenticating = false;
+            }
+        }, null);
+}
+
+private void unlockDevice() {
+    DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+    ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
+    
+    if (dpm.isAdminActive(adminComponent)) {
+        // This doesn't directly unlock - you'd need to dismiss the keyguard
+        // For full unlock, you need to use KeyguardManager
+        KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // On Android 8+, you can show authentication prompt
+            Intent intent = km.createConfirmDeviceCredentialIntent(null, null);
+            if (intent != null) {
+                startActivityForResult(intent, 1001);
+            }
+        }
+    }
+}
     private void setupPreferences() {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         if (mSharedPreferences.getBoolean(SettingsActivity.KEY_PREF_NOTIFICATION, false)) {
