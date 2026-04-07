@@ -834,7 +834,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 return true;
             case R.id.appmenu_onplaystore:
                 final Intent intentPlayStore = new Intent(Intent.ACTION_VIEW);
-                intentPlayStore.setData(Uri.parse("market:
+                intentPlayStore.setData(Uri.parse("market://details?id=" +
                         launchableActivity.getComponent().getPackageName()));
                 startActivity(intentPlayStore);
                 return true;
