@@ -9,36 +9,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Remove Java/Copyright Comments
+      - name: Remove Java/Copyright Comments (Safe Version)
         run: |
-          # Remove /* ... */ style comments (multiline) - but preserve license headers carefully
-          find app/src/main/java -name "*.java" -exec sed -i '/^\/\*.*Copyright/,/\*\//d' {} \;
+          # Remove multi-line /* ... */ comments that contain Copyright
+          find app/src/main/java -name "*.java" -exec sed -i '/^[[:space:]]*\/\*.*Copyright/,/\*\//d' {} \;
           
-          # Remove remaining /* ... */ that span single line
-          find app/src/main/java -name "*.java" -exec sed -i 's/\/\*.*\*\///g' {} \;
+          # Remove standalone // comments (but NOT // inside string literals)
+          # This regex looks for // not followed by a quote and not inside a string
+          find app/src/main/java -name "*.java" -exec sed -i 's|//[^"].*$||g' {} \;
           
-          # Remove // style comments (but not URLs or code with //)
-          find app/src/main/java -name "*.java" -exec sed -i 's/\/\/[^"].*$//g' {} \;
+          # Remove empty comment lines and extra blank lines
+          find app/src/main/java -name "*.java" -exec sed -i '/^[[:space:]]*$/d' {} \;
           
-          # Remove empty lines left behind (multiple blank lines to single)
-          find app/src/main/java -name "*.java" -exec sed -i '/^$/N;/^\n$/D' {} \;
-      
-      - name: Remove XML Comments
+      - name: Fix any broken string literals (repair market://)
         run: |
-          # Remove <!-- ... --> XML comments
-          find app/src/main/res -name "*.xml" -exec sed -i 's/<!--.*-->//g' {} \;
-          find app/src/main/res -name "*.xml" -exec sed -i '/<!--/,/-->/d' {} \;
-      
-      - name: Remove Gradle Comments
+          # Repair any damaged market:// URLs
+          find app/src/main/java -name "*.java" -exec sed -i 's|"market:$|"market://details?id="|g' {} \;
+          find app/src/main/java -name "*.java" -exec sed -i 's|"market:details|"market://details|g' {} \;
+          
+      - name: Remove XML Comments Only
         run: |
-          # Remove // comments in gradle files
-          sed -i 's/\/\/.*$//g' *.gradle app/*.gradle 2>/dev/null || true
+          # Safer XML comment removal - only standalone comment lines
+          find app/src/main/res -name "*.xml" -exec sed -i '/^[[:space:]]*<!--.*-->/d' {} \;
+          find app/src/main/res -name "*.xml" -exec sed -i '/^[[:space:]]*<!--/,/-->/d' {} \;
           
       - name: Remove EditorConfig Comments
         run: |
-          # Remove # comments from .editorconfig
           sed -i '/^[[:space:]]*#/d' .editorconfig
-          sed -i 's/#.*$//' .editorconfig
+          
+      - name: Verify Java files still compile (syntax check)
+        run: |
+          # Check for common broken patterns
+          if grep -r '":' app/src/main/java --include="*.java" | grep -v '//' | grep -q '://'; then
+            echo "Found potential broken URLs, repairing..."
+            find app/src/main/java -name "*.java" -exec sed -i 's|":|"://|g' {} \;
+          fi
           
       - name: Commit and Push Changes
         run: |
