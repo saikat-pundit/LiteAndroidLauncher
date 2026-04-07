@@ -129,8 +129,8 @@ public class SearchActivity extends Activity
     private PackageManager mPm;
     private View mOverflowButtonTopleft;
     private int mColumnCount;
-    //used only in function getAllSubwords. they are here as class fields to avoid
-    // object re-allocation.
+    
+    
     private StringBuilder mWordSinceLastSpaceBuilder;
     private StringBuilder mWordSinceLastCapitalBuilder;
     private int mGridViewTopRowHeight;
@@ -146,49 +146,46 @@ public class SearchActivity extends Activity
             updateVisibleApps();
         }
 
-
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            //do nothing
+            
         }
-
 
         @Override
         public void afterTextChanged(Editable s) {
-            //do nothing
+            
         }
-
 
     };
     private boolean mDisableIcons;
     private boolean mAutoKeyboard;
     private boolean mIsCacheClear;
 
-        // --- ADD THIS METHOD ---
+        
     private void scheduleDailyReboot() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, RebootReceiver.class);
         
-        // Setup the pending intent that will fire our BroadcastReceiver
+        
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, flags);
 
-        // Calculate 2:00 AM
+        
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, 2);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
 
-        // If it is already past 2:00 AM today, schedule it for tomorrow instead
+        
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_MONTH, 1);
         }
 
-        // Schedule the alarm to repeat daily
+        
         alarmManager.setRepeating(
                 AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
@@ -208,7 +205,7 @@ public class SearchActivity extends Activity
 
         final Resources resources = getResources();
 
-        //fields:
+        
         mLaunchableActivityPackageNameHashMap = new HashMap<>();
         mShareableActivityInfos = new ArrayList<>(sInitialArrayListSize);
         mActivityInfos = new ArrayList<>(sInitialArrayListSize);
@@ -246,17 +243,15 @@ public class SearchActivity extends Activity
         mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
         mLaunchableActivityPrefs = new LaunchableActivityPrefs(this);
 
-        //noinspection deprecation
+        
         mDefaultAppIcon = Resources.getSystem().getDrawable(
                 android.R.mipmap.sym_def_app_icon);
         mIconSizePixels = resources.getDimensionPixelSize(R.dimen.app_icon_size);
-
 
         mPinToTopComparator = new PinToTop();
         mRecentOrderComparator = new RecentOrder();
         mAlphabeticalOrderComparator = new AlphabeticalOrder();
         mUsageOrderComparator = new UsageOrder();
-
 
         mNumOfCores = Runtime.getRuntime().availableProcessors();
 
@@ -271,7 +266,7 @@ public class SearchActivity extends Activity
 
         loadLaunchableApps();
 
-        //loadShareableApps();
+        
         setupImageLoadingThreads(resources);
         setupViews();
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -305,19 +300,19 @@ public class SearchActivity extends Activity
         mSearchEditText.clearFocus();
         freezeTargetApps();
     }
-          // --- NEW DEVICE OWNER FREEZING METHOD ---
+          
     private void freezeTargetApps() {
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
 
-        // Check if the app has been granted Device Owner status
+        
         if (dpm.isDeviceOwnerApp(getPackageName())) {
             if (mPackagesToKill.length > 0) {
                 try {
-                    // This command officially suspends (freezes) the array of packages
+                    
                     dpm.setPackagesSuspended(adminComponent, mPackagesToKill, true);
                 } catch (Exception e) {
-                    // Catch errors silently
+                    
                 }
             }
         }
@@ -329,7 +324,7 @@ public class SearchActivity extends Activity
     if (dpm.isAdminActive(adminComponent)) {
         dpm.lockNow();
     } else {
-        // Fallback: use PowerManager if device admin not active
+        
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             pm.goToSleep(SystemClock.uptimeMillis());
@@ -337,7 +332,7 @@ public class SearchActivity extends Activity
     }
 }            
     public int setPaddingHeights() {
-        // 1. Change this from 2 to 1 to drastically reduce the top gap
+        
         int statusBarPaddings = 1; 
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -347,7 +342,7 @@ public class SearchActivity extends Activity
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-            // 2. ADD THIS: Force the status bar to be 100% transparent (removes the dark tint)
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
             }
@@ -355,7 +350,7 @@ public class SearchActivity extends Activity
             final View statusBarDummy = findViewById(R.id.statusBarDummyView);
             statusBarDummy.getLayoutParams().height = mStatusBarHeight;
             
-            // 3. REMOVE the statusBarPaddings++; line that used to be here
+            
         }
 
         final View topFillerView = findViewById(R.id.topFillerView);
@@ -414,12 +409,12 @@ public class SearchActivity extends Activity
 
             }
         });
-        // Add touch listener for empty space to lock screen
+        
 mAppListView.setOnTouchListener(new View.OnTouchListener() {
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            // Check if touch is on empty space (not on a child view)
+            
             int position = ((GridView) mAppListView).pointToPosition((int) event.getX(), (int) event.getY());
             if (position == AdapterView.INVALID_POSITION) {
                 lockScreen();
@@ -429,9 +424,8 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         return false;
     }
 });    
-        //noinspection unchecked
+        
         mAppListView.setAdapter(mArrayAdapter);
-
 
         mAppListView.setOnItemClickListener(new OnItemClickListener() {
 
@@ -443,7 +437,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             }
 
         });
-
 
     }
 
@@ -483,11 +476,10 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         mImageTasksSharedData = new ImageLoadingTask.SharedData(this, mPm, mContext, mIconSizePixels);
     }
 
-
     private int getOptimalNumberOfThreads(final Resources resources) {
         final int maxThreads = resources.getInteger(R.integer.max_imageloading_threads);
         int numThreads = mNumOfCores - 1;
-        //clamp numThreads
+        
         if (numThreads < 1) numThreads = 1;
         else if (numThreads > maxThreads) numThreads = maxThreads;
         return numThreads;
@@ -503,7 +495,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         final String thisClassCanonicalName = this.getClass().getCanonicalName();
         for (LaunchableActivity launchableActivity : updatedActivityInfos) {
             final String className = launchableActivity.getComponent().getClassName();
-            //don't show this activity in the launcher
+            
             if (className.equals(thisClassCanonicalName)) {
                 continue;
             }
@@ -604,8 +596,8 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             }
             if (mActivityInfos.remove(launchableActivityToRemove))
                 activityListChanged = true;
-            //TODO DEBUGME if uncommented the next line causes a crash.
-            //mLaunchableActivityPrefs.deletePreference(className);
+            
+            
         }
 
         if (activityListChanged)
@@ -651,9 +643,9 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 simpleTaskConsumerManager.addTask(loadLaunchableActivityTask);
             }
 
-            //Log.d("MultithreadStartup","waiting for completion of all tasks");
+            
             simpleTaskConsumerManager.destroyAllConsumers(true, true);
-            //Log.d("MultithreadStartup", "all tasks ok");
+            
         }
         updateApps(launchablesFromResolve, true);
     }
@@ -684,10 +676,9 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             Log.d("SearchActivity", "changed: " + packageName);
             final List<ResolveInfo> infoList = mPm.queryIntentActivities(intent, 0);
 
-            //we don't actually need to run removeActivitiesFromPackage if the package
-            // is being installed
+            
+            
             removeActivitiesFromPackage(packageName);
-
 
             if (infoList.isEmpty()) {
                 Log.d("SearchActivity", "No activities in list. Uninstall detected!");
@@ -704,7 +695,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             }
 
         }
-
 
     }
 
@@ -733,7 +723,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        //does this need to run in uiThread?
+        
         if (key.equals("package_changed_name") && !sharedPreferences.getString(key, "").isEmpty()) {
             handlePackageChanged();
         } else if (key.equals("pref_app_preferred_order")) {
@@ -741,7 +731,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             mShouldOrderByUsages = order.equals("usage");
             mShouldOrderByRecents = order.equals("recent");
 
-            //mShouldOrderByUsages = mSharedPreferences.getString("pref_app_preferred_order", "usages").equals("usages");
+            
             sortApps();
             mArrayAdapter.notifyDataSetChanged();
         } else if (key.equals("pref_disable_icons")) {
@@ -749,7 +739,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         } else if (key.equals("pref_autokeyboard")) {
             mAutoKeyboard = mSharedPreferences.getBoolean("pref_autokeyboard", false);
         }
-
 
     }
 
@@ -792,7 +781,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
+        
         switch (item.getItemId()) {
             case R.id.action_settings:
                 final Intent intentSettings = new Intent(this, SettingsActivity.class);
@@ -824,7 +813,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         }
     }
 
-
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
@@ -846,7 +834,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 return true;
             case R.id.appmenu_onplaystore:
                 final Intent intentPlayStore = new Intent(Intent.ACTION_VIEW);
-                intentPlayStore.setData(Uri.parse("market://details?id=" +
+                intentPlayStore.setData(Uri.parse("market:
                         launchableActivity.getComponent().getPackageName()));
                 startActivity(intentPlayStore);
                 return true;
@@ -866,7 +854,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
     public void onClickSettingsButton(View view) {
         showPopup(mOverflowButtonTopleft);
 
-
     }
 
     public void launchActivity(final LaunchableActivity launchableActivity) {
@@ -881,12 +868,11 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             sortApps();
             mArrayAdapter.notifyDataSetChanged();
         } catch (ActivityNotFoundException e) {
-            //this should only happen when the launcher still hasn't updated the file list after
-            //an activity removal.
+            
+            
             Toast.makeText(mContext, getString(R.string.activity_not_found),
                     Toast.LENGTH_SHORT).show();
         }
-
 
     }
 

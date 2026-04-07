@@ -11,7 +11,6 @@ import java.util.List;
  */
 public class ContentShare {
 
-
     public static Intent shareTextIntent(String text) {
 
         Intent sendIntent = new Intent();
@@ -22,7 +21,6 @@ public class ContentShare {
         return sendIntent;
 
     }
-
 
     public static List<ResolveInfo> getTextReceivers(PackageManager pm) {
 

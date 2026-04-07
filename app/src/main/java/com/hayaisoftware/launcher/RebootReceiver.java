@@ -14,7 +14,7 @@ public class RebootReceiver extends BroadcastReceiver {
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(context, LauncherDeviceAdminReceiver.class);
 
-        // The reboot API was introduced in Android Nougat (API 24)
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             if (dpm.isDeviceOwnerApp(context.getPackageName())) {
                 try {
