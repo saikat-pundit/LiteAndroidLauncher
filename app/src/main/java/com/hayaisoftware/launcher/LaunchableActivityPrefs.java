@@ -1,19 +1,14 @@
-
 package com.hayaisoftware.launcher;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
-
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
-
 public class LaunchableActivityPrefs extends SQLiteOpenHelper {
-
     private static final int DATABASE_VERSION = 3;
     private static final String TABLE_NAME = "ActivityLaunchNumbers";
     private static final String KEY_CLASSNAME = "ClassName";
@@ -30,12 +25,10 @@ public class LaunchableActivityPrefs extends SQLiteOpenHelper {
     public LaunchableActivityPrefs(Context context) {
         super(context, TABLE_NAME, null, DATABASE_VERSION);
     }
-
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(TABLE_CREATE);
     }
-
     public void writePreference(String className, long number, int priority, int usageQuantity) {
         Log.d("LaunchablePrefs", "writePreference running");
         final SQLiteDatabase db = getWritableDatabase();
@@ -67,7 +60,6 @@ public class LaunchableActivityPrefs extends SQLiteOpenHelper {
         statement.close();
         db.close();
     }
-
     public void deletePreference(String className) {
         final SQLiteDatabase db = getWritableDatabase();
         final SQLiteStatement statement = db.compileStatement("DELETE FROM "
@@ -76,19 +68,13 @@ public class LaunchableActivityPrefs extends SQLiteOpenHelper {
         statement.executeInsert();
         statement.close();
         db.close();
-
     }
-
     public void setAllPreferences(List<LaunchableActivity> activityList) {
-
         final SQLiteDatabase db = getReadableDatabase();
-
         final Cursor cursor = db.query(TABLE_NAME,
                 new String[]{KEY_CLASSNAME, KEY_LASTLAUNCHTIMESTAMP, KEY_USAGEQUANTIY, KEY_FAVORITE},
                 null, null, null, null, null);
-
         final AbstractMap<String, ActivityPref> activityPrefMap = new HashMap<>(cursor.getCount());
-
         if (cursor.moveToFirst()) {
             do {
                 ActivityPref activityPref = new ActivityPref();
@@ -110,9 +96,7 @@ public class LaunchableActivityPrefs extends SQLiteOpenHelper {
                 activity.setPriority(activityPref.priority);
             }
         }
-
     }
-
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 3 && newVersion == 3) {
@@ -120,7 +104,6 @@ public class LaunchableActivityPrefs extends SQLiteOpenHelper {
             onCreate(db);
         }
     }
-
     private class ActivityPref {
         String className;
         int priority;

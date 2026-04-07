@@ -1,17 +1,12 @@
-
 package com.hayaisoftware.launcher;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
-
 public class PackageChangedReceiver extends BroadcastReceiver {
-
         public void onReceive(Context context, Intent intent) {
             final String packageChangedName = intent.getData().getSchemeSpecificPart();
-
             if (packageChangedName != null && !packageChangedName.isEmpty()) {
                 Log.d("Received thing", "EXTRA_CHANGED_COMPONENT_NAME_LIST=" +
                         packageChangedName);
@@ -27,5 +22,4 @@ public class PackageChangedReceiver extends BroadcastReceiver {
                 editor.apply();
             }
         }
-
 }

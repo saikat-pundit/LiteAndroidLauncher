@@ -1,29 +1,20 @@
-
 package com.hayaisoftware.launcher;
-
 import android.util.Log;
 import android.util.SparseArray;
-
 import java.util.HashSet;
-
 public class Trie<T> {
-
 	private final Node mRoot;
-
 	public Trie() {
 		mRoot = new Node();
 	}
-
 	public void put(final CharSequence charSequence, T object) {
 		Log.d("TRIE",charSequence.toString());
 		addRec(charSequence, mRoot, object);
 	}
-
 	public T get(final CharSequence charSequence) {
 		final Node node = getNodeRec(charSequence, mRoot);
 		return node!=null ? node.object : null;
 	}
-
 	public boolean remove(CharSequence charSequence, final T object) {
 		Node ancestor = mRoot;
 		Node node;
@@ -40,11 +31,9 @@ public class Trie<T> {
 		}while(node.object != null);
 		return true;
 	}
-
 	public HashSet<T> getAllStartingWith(final CharSequence charSequence) {
 		return getAllStartingWithRec(charSequence, mRoot, new HashSet<T>());
 	}
-
 	private HashSet<T> getAllStartingWithRec(final CharSequence charSequence,
 											 Node ancestor, HashSet<T> list) {
 		final int length = charSequence.length();
@@ -61,7 +50,6 @@ public class Trie<T> {
 				list.add(ancestor.object);
 			}
 			final int numOfChildren = ancestor.children.size();
-
 			for (int childIndex = 0; childIndex < numOfChildren; childIndex++) {
 				getAllStartingWithRec(charSequence,
 						ancestor.children.valueAt(childIndex), list);
@@ -69,7 +57,6 @@ public class Trie<T> {
 			return list;
 		}
 	}
-
 	private Node getNodeRec(final CharSequence charSequence, final Node ancestor) {
 		final int length = charSequence.length();
 		if (length > 0) {
@@ -82,9 +69,7 @@ public class Trie<T> {
 		} else {
 			return ancestor;
 		}
-
 	}
-
 	private void addRec(final CharSequence charSequence, final Node node, final T object) {
 		final int length = charSequence.length();
 		if (length > 0) {
@@ -102,16 +87,12 @@ public class Trie<T> {
 				addRec(charSequence + " ", node, object);
 			}
 		}
-
 	}
-
 	private final class Node {
 		final SparseArray<Node> children;
 		public T object;
-
 		public Node() {
 			children = new SparseArray<>();
 		}
-
 	}
 }

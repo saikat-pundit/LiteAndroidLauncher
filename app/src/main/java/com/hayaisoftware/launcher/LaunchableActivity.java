@@ -1,6 +1,4 @@
-
 package com.hayaisoftware.launcher;
-
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,11 +9,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-
 import com.hayaisoftware.launcher.util.ContentShare;
-
 public class LaunchableActivity{
-
     private final ActivityInfo mActivityInfo;
     private final String mActivityLabel;
     private final ComponentName mComponentName;
@@ -25,7 +20,6 @@ public class LaunchableActivity{
     private boolean mShareable;
     private Drawable mActivityIcon;
     private int mPriority;
-
     public LaunchableActivity(final ActivityInfo activityInfo, final String activityLabel,
                               final boolean isShareable) {
         this.mActivityInfo = activityInfo;
@@ -41,7 +35,6 @@ public class LaunchableActivity{
         this.mActivityIcon = activityIcon;
         this.mActivityInfo = null;
     }
-
     public Intent getLaunchIntent(final String searchString) {
         if (mLaunchIntent != null)
             return mLaunchIntent;
@@ -56,39 +49,30 @@ public class LaunchableActivity{
         launchIntent.setComponent(mComponentName);
         return launchIntent;
     }
-
     public void setLaunchTime() {
         lastLaunchTime = System.currentTimeMillis() / 1000;
     }
-
     public int getPriority() {
         return mPriority;
     }
-
     public void setPriority(final int priority) {
         this.mPriority = priority;
     }
-
     public long getLaunchTime() {
         return lastLaunchTime;
     }
-
     public void setLaunchTime(long timestamp) {
         lastLaunchTime = timestamp;
     }
-
     public String getActivityLabel() {
         return mActivityLabel;
     }
-
     public boolean isIconLoaded() {
         return mActivityIcon != null;
     }
-
     public synchronized void deleteActivityIcon(){
         mActivityIcon=null;
     }
-
     public synchronized Drawable getActivityIcon(final PackageManager pm, final Context context,
                                                  final int iconSizePixels) {
         if (!isIconLoaded()) {
@@ -97,30 +81,18 @@ public class LaunchableActivity{
                         (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
                 final int iconDpi = activityManager.getLauncherLargeIconDensity();
                 try {
-                    
                     _activityIcon =
                             pm.getResourcesForActivity(mComponentName).getDrawableForDensity(
                                     mActivityInfo.getIconResource(), iconDpi);
-
                 } catch (PackageManager.NameNotFoundException | Resources.NotFoundException e) {
-                    
-                    
                 }
-
                 if (_activityIcon == null) {
-                    
                     _activityIcon = Resources.getSystem().getDrawable(
                             android.R.mipmap.sym_def_app_icon);
                 }
-
-            
-            
             if (_activityIcon instanceof BitmapDrawable) {
-                
-                
                 if (_activityIcon.getIntrinsicHeight() > iconSizePixels &&
                         _activityIcon.getIntrinsicWidth() > iconSizePixels) {
-                    
                     _activityIcon = new BitmapDrawable(
                             Bitmap.createScaledBitmap(((BitmapDrawable) _activityIcon).getBitmap()
                                     , iconSizePixels, iconSizePixels, false));
@@ -130,19 +102,15 @@ public class LaunchableActivity{
         }
         return mActivityIcon;
     }
-
     public ComponentName getComponent() {
         return mComponentName;
     }
-
     public String getClassName() {
         return mComponentName.getClassName();
     }
-
     public boolean isShareable() {
         return mShareable;
     }
-
     public void addUsage() {
         usagesQuantity ++;
     }

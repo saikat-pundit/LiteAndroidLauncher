@@ -1,5 +1,4 @@
 package com.hayaisoftware.launcher.activities;
-
 import android.view.MotionEvent;
 import android.os.SystemClock;
 import android.app.admin.DevicePolicyManager;
@@ -53,7 +52,6 @@ import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.hayaisoftware.launcher.ImageLoadingTask;
 import com.hayaisoftware.launcher.LaunchableActivity;
 import com.hayaisoftware.launcher.LaunchableActivityPrefs;
@@ -69,7 +67,6 @@ import com.hayaisoftware.launcher.comparators.RecentOrder;
 import com.hayaisoftware.launcher.comparators.UsageOrder;
 import com.hayaisoftware.launcher.threading.SimpleTaskConsumerManager;
 import com.hayaisoftware.launcher.util.ContentShare;
-
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,16 +76,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
-
 public class SearchActivity extends Activity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
-
     private static final int sNavigationBarHeightMultiplier = 1;
     private static final int sGridViewTopRowExtraPaddingInDP = 6;
     private static final int sMarginFromNavigationBarInDp = 16;
     private static final int sGridItemHeightInDp = 96;
     private static final int sInitialArrayListSize = 300;
-
     private final Pattern mPattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
     private int mStatusBarHeight;
     private final String[] mPackagesToKill = {
@@ -119,7 +113,6 @@ public class SearchActivity extends Activity
     private View mClearButton;
     private int mNumOfCores;
     private BroadcastReceiver mPackageChangedReceiver;
-
     private Comparator<LaunchableActivity> mPinToTopComparator;
     private Comparator<LaunchableActivity> mRecentOrderComparator;
     private Comparator<LaunchableActivity> mAlphabeticalOrderComparator;
@@ -129,8 +122,6 @@ public class SearchActivity extends Activity
     private PackageManager mPm;
     private View mOverflowButtonTopleft;
     private int mColumnCount;
-    
-    
     private StringBuilder mWordSinceLastSpaceBuilder;
     private StringBuilder mWordSinceLastCapitalBuilder;
     private int mGridViewTopRowHeight;
@@ -138,54 +129,38 @@ public class SearchActivity extends Activity
     private boolean mShouldOrderByRecents;
     private boolean mShouldOrderByUsages;
     private final TextWatcher mTextWatcher = new TextWatcher() {
-
         @Override
         public void onTextChanged(CharSequence s, int start, int before,
                                   int count) {
             mClearButton.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
             updateVisibleApps();
         }
-
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            
         }
-
         @Override
         public void afterTextChanged(Editable s) {
-            
         }
-
     };
     private boolean mDisableIcons;
     private boolean mAutoKeyboard;
     private boolean mIsCacheClear;
-
-        
     private void scheduleDailyReboot() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, RebootReceiver.class);
-        
-        
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, flags);
-
-        
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, 2);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-
-        
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_MONTH, 1);
         }
-
-        
         alarmManager.setRepeating(
                 AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
@@ -193,26 +168,18 @@ public class SearchActivity extends Activity
                 pendingIntent
         );
     }
-
-                
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_search);
-
         mPm = getPackageManager();
-
         final Resources resources = getResources();
-
-        
         mLaunchableActivityPackageNameHashMap = new HashMap<>();
         mShareableActivityInfos = new ArrayList<>(sInitialArrayListSize);
         mActivityInfos = new ArrayList<>(sInitialArrayListSize);
         mTrie = new Trie<>();
         mWordSinceLastSpaceBuilder = new StringBuilder(64);
         mWordSinceLastCapitalBuilder = new StringBuilder(64);
-
         mSearchEditText = (EditText) findViewById(R.id.editText1);
         mAppListView = (GridView) findViewById(R.id.appsContainer);
         mClearButton = findViewById(R.id.clear_button);
@@ -234,27 +201,20 @@ public class SearchActivity extends Activity
         mGridViewBottomRowHeight = gridItemHeightInPixels + sNavigationBarHeightMultiplier *
                 StatusBarColorHelper.getNavigationBarHeight(getResources()) +
                 marginFromNavigationBarInPixels;
-
         mColumnCount = resources.getInteger(R.integer.app_grid_columns);
-
         mSharedPreferences = PreferenceManager
                 .getDefaultSharedPreferences(this);
         setupPreferences();
         mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
         mLaunchableActivityPrefs = new LaunchableActivityPrefs(this);
-
-        
         mDefaultAppIcon = Resources.getSystem().getDrawable(
                 android.R.mipmap.sym_def_app_icon);
         mIconSizePixels = resources.getDimensionPixelSize(R.dimen.app_icon_size);
-
         mPinToTopComparator = new PinToTop();
         mRecentOrderComparator = new RecentOrder();
         mAlphabeticalOrderComparator = new AlphabeticalOrder();
         mUsageOrderComparator = new UsageOrder();
-
         mNumOfCores = Runtime.getRuntime().availableProcessors();
-
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_PACKAGE_ADDED);
         filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
@@ -263,10 +223,7 @@ public class SearchActivity extends Activity
         filter.addDataScheme("package");
         mPackageChangedReceiver = new PackageChangedReceiver();
         registerReceiver(mPackageChangedReceiver, filter);
-
         loadLaunchableApps();
-
-        
         setupImageLoadingThreads(resources);
         setupViews();
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -280,10 +237,8 @@ public class SearchActivity extends Activity
         }
             scheduleDailyReboot();
     }
-
     private void loadShareableApps() {
         List<ResolveInfo> infoList = ContentShare.getTextReceivers(mPm);
-
         for (ResolveInfo info : infoList) {
             final LaunchableActivity launchableActivity = new LaunchableActivity(
                     info.activityInfo, info.loadLabel(mPm).toString(), true);
@@ -291,7 +246,6 @@ public class SearchActivity extends Activity
         }
         updateApps(mShareableActivityInfos, false);
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -300,19 +254,14 @@ public class SearchActivity extends Activity
         mSearchEditText.clearFocus();
         freezeTargetApps();
     }
-          
     private void freezeTargetApps() {
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
-
-        
         if (dpm.isDeviceOwnerApp(getPackageName())) {
             if (mPackagesToKill.length > 0) {
                 try {
-                    
                     dpm.setPackagesSuspended(adminComponent, mPackagesToKill, true);
                 } catch (Exception e) {
-                    
                 }
             }
         }
@@ -320,11 +269,9 @@ public class SearchActivity extends Activity
     private void lockScreen() {
     DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
     ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
-    
     if (dpm.isAdminActive(adminComponent)) {
         dpm.lockNow();
     } else {
-        
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             pm.goToSleep(SystemClock.uptimeMillis());
@@ -332,50 +279,35 @@ public class SearchActivity extends Activity
     }
 }            
     public int setPaddingHeights() {
-        
         int statusBarPaddings = 1; 
-        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-
             final Window window = getWindow();
             window.getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-
-            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
             }
-
             final View statusBarDummy = findViewById(R.id.statusBarDummyView);
             statusBarDummy.getLayoutParams().height = mStatusBarHeight;
-            
-            
         }
-
         final View topFillerView = findViewById(R.id.topFillerView);
         topFillerView.getLayoutParams().height = mStatusBarHeight;
-
         final View bottomFillerView = findViewById(R.id.bottomFillerView);
         bottomFillerView.getLayoutParams().height = mStatusBarHeight;
-
         return statusBarPaddings;
     }
-
     @Override
     protected void onPostResume() {
         super.onPostResume();
         hideKeyboard();
     }
-
     private void setupViews() {
-
         mSearchEditText.addTextChangedListener(mTextWatcher);
         mSearchEditText.setImeActionLabel(getString(R.string.launch), EditorInfo.IME_ACTION_GO);
         mSearchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-
                 if (actionId == EditorInfo.IME_ACTION_GO) {
                     Log.d("KEYBOARD", "ACTION_GO");
                     return openFirstActivity();
@@ -394,7 +326,6 @@ public class SearchActivity extends Activity
             }
         });
         registerForContextMenu(mAppListView);
-
         ((GridView) mAppListView).setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -402,19 +333,15 @@ public class SearchActivity extends Activity
                     hideKeyboard();
                 }
             }
-
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem,
                                  int visibleItemCount, int totalItemCount) {
-
             }
         });
-        
 mAppListView.setOnTouchListener(new View.OnTouchListener() {
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            
             int position = ((GridView) mAppListView).pointToPosition((int) event.getX(), (int) event.getY());
             if (position == AdapterView.INVALID_POSITION) {
                 lockScreen();
@@ -424,22 +351,16 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         return false;
     }
 });    
-        
         mAppListView.setAdapter(mArrayAdapter);
-
         mAppListView.setOnItemClickListener(new OnItemClickListener() {
-
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position >= mColumnCount) {
                     launchActivity(mActivityInfos.get(position - mColumnCount));
                 }
             }
-
         });
-
     }
-
     private boolean openFirstActivity() {
         if (!mActivityInfos.isEmpty()) {
             launchActivity(mActivityInfos.get(0));
@@ -447,7 +368,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         }
         return false;
     }
-
     private void setupPreferences() {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         if (mSharedPreferences.getBoolean(SettingsActivity.KEY_PREF_NOTIFICATION, false)) {
@@ -461,45 +381,35 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         String order = mSharedPreferences.getString("pref_app_preferred_order", "recent");
         mShouldOrderByUsages = order.equals("usage");
         mShouldOrderByRecents = order.equals("recent");
-
         mDisableIcons =
                 mSharedPreferences.getBoolean("pref_disable_icons", false);
         mAutoKeyboard =
                 mSharedPreferences.getBoolean("pref_autokeyboard", false);
     }
-
     private void setupImageLoadingThreads(final Resources resources) {
-
         mImageLoadingConsumersManager =
                 new SimpleTaskConsumerManager(getOptimalNumberOfThreads(resources),
                         mActivityInfos.size());
         mImageTasksSharedData = new ImageLoadingTask.SharedData(this, mPm, mContext, mIconSizePixels);
     }
-
     private int getOptimalNumberOfThreads(final Resources resources) {
         final int maxThreads = resources.getInteger(R.integer.max_imageloading_threads);
         int numThreads = mNumOfCores - 1;
-        
         if (numThreads < 1) numThreads = 1;
         else if (numThreads > maxThreads) numThreads = maxThreads;
         return numThreads;
     }
-
     private void updateApps(final List<LaunchableActivity> updatedActivityInfos, boolean addToTrie) {
-
         for (LaunchableActivity launchableActivity : updatedActivityInfos) {
             final String packageName = launchableActivity.getComponent().getPackageName();
             mLaunchableActivityPackageNameHashMap.remove(packageName);
         }
-
         final String thisClassCanonicalName = this.getClass().getCanonicalName();
         for (LaunchableActivity launchableActivity : updatedActivityInfos) {
             final String className = launchableActivity.getComponent().getClassName();
-            
             if (className.equals(thisClassCanonicalName)) {
                 continue;
             }
-
             if (addToTrie) {
                 final String activityLabel = launchableActivity.getActivityLabel();
                 final List<String> subwords = getAllSubwords(stripAccents(activityLabel));
@@ -508,7 +418,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 }
             }
             final String packageName = launchableActivity.getComponent().getPackageName();
-
             List<LaunchableActivity> launchableActivitiesToUpdate =
                     mLaunchableActivityPackageNameHashMap.remove(packageName);
             if (launchableActivitiesToUpdate == null) {
@@ -521,18 +430,15 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         mLaunchableActivityPrefs.setAllPreferences(updatedActivityInfos);
         updateVisibleApps();
     }
-
     private List<String> getAllSubwords(String line) {
         final ArrayList<String> subwords = new ArrayList<>();
         for (int i = 0; i < line.length(); i++) {
             final char character = line.charAt(i);
-
             if (Character.isUpperCase(character) || Character.isDigit(character)) {
                 if (mWordSinceLastCapitalBuilder.length() > 1) {
                     subwords.add(mWordSinceLastCapitalBuilder.toString().toLowerCase());
                 }
                 mWordSinceLastCapitalBuilder.setLength(0);
-
             }
             if (Character.isSpaceChar(character)) {
                 subwords.add(mWordSinceLastSpaceBuilder.toString().toLowerCase());
@@ -559,7 +465,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         mWordSinceLastCapitalBuilder.setLength(0);
         return subwords;
     }
-
     private void updateVisibleApps() {
         final HashSet<LaunchableActivity> infoList =
                 mTrie.getAllStartingWith(stripAccents(mSearchEditText.getText()
@@ -569,15 +474,12 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         mActivityInfos.addAll(mShareableActivityInfos);
         sortApps();
         Log.d("DEBUG_SEARCH", mActivityInfos.size() + "");
-
         mArrayAdapter.notifyDataSetChanged();
     }
-
     private void sortApps() {
         Collections.sort(mActivityInfos, mAlphabeticalOrderComparator);
         Collections.sort(mActivityInfos, mPinToTopComparator);
     }
-
     private void removeActivitiesFromPackage(String packageName) {
         final List<LaunchableActivity> launchableActivitiesToRemove =
                 mLaunchableActivityPackageNameHashMap.remove(packageName);
@@ -585,7 +487,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             return;
         }
         boolean activityListChanged = false;
-
         for (LaunchableActivity launchableActivityToRemove : launchableActivitiesToRemove) {
             final String className = launchableActivityToRemove.getClassName();
             Log.d("SearchActivity", "removing activity " + className);
@@ -596,14 +497,10 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             }
             if (mActivityInfos.remove(launchableActivityToRemove))
                 activityListChanged = true;
-            
-            
         }
-
         if (activityListChanged)
             mArrayAdapter.notifyDataSetChanged();
     }
-
     private boolean isCurrentLauncher() {
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
@@ -611,20 +508,15 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 mPm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
         return resolveInfo != null &&
                 mContext.getPackageName().equals(resolveInfo.activityInfo.packageName);
-
     }
-
     private String stripAccents(final String s) {
         return mPattern.matcher(Normalizer.normalize(s, Normalizer.Form.NFKD)).replaceAll("");
     }
-
     private void loadLaunchableApps() {
-
         List<ResolveInfo> infoList = ContentShare.getLaunchableResolveInfos(mPm);
         mArrayAdapter = new ActivityInfoArrayAdapter(this,
                 R.layout.app_grid_item, mActivityInfos);
         ArrayList<LaunchableActivity> launchablesFromResolve = new ArrayList<>(infoList.size());
-
         if (mNumOfCores <= 1) {
             for (ResolveInfo info : infoList) {
                 final LaunchableActivity launchableActivity = new LaunchableActivity(
@@ -634,7 +526,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         } else {
             SimpleTaskConsumerManager simpleTaskConsumerManager =
                     new SimpleTaskConsumerManager(mNumOfCores, infoList.size());
-
             LoadLaunchableActivityTask.SharedData sharedAppLoadData =
                     new LoadLaunchableActivityTask.SharedData(mPm, launchablesFromResolve);
             for (ResolveInfo info : infoList) {
@@ -642,44 +533,32 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                         new LoadLaunchableActivityTask(info, sharedAppLoadData);
                 simpleTaskConsumerManager.addTask(loadLaunchableActivityTask);
             }
-
-            
             simpleTaskConsumerManager.destroyAllConsumers(true, true);
-            
         }
         updateApps(launchablesFromResolve, true);
     }
-
     private void showKeyboard() {
         mInputMethodManager.showSoftInput(mSearchEditText, 0);
     }
-
     private void hideKeyboard() {
         mInputMethodManager.hideSoftInputFromWindow(mSearchEditText.getWindowToken(), 0);
     }
-
     private void handlePackageChanged() {
         final SharedPreferences.Editor editor = mSharedPreferences.edit();
         final String[] packageChangedNames = mSharedPreferences.getString("package_changed_name", "")
                 .split(" ");
         editor.putString("package_changed_name", "");
         editor.apply();
-
         for (String packageName : packageChangedNames) {
             packageName = packageName.trim();
             if (packageName.isEmpty()) continue;
-
             final Intent intent = new Intent();
             intent.setAction(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             intent.setPackage(packageName);
             Log.d("SearchActivity", "changed: " + packageName);
             final List<ResolveInfo> infoList = mPm.queryIntentActivities(intent, 0);
-
-            
-            
             removeActivitiesFromPackage(packageName);
-
             if (infoList.isEmpty()) {
                 Log.d("SearchActivity", "No activities in list. Uninstall detected!");
                 updateVisibleApps();
@@ -693,17 +572,13 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 }
                 updateApps(launchablesFromResolve, true);
             }
-
         }
-
     }
-
     @Override
     public void onBackPressed() {
         if (!isCurrentLauncher())
             moveTaskToBack(false);
     }
-
     @Override
     protected void onDestroy() {
         if (mImageLoadingConsumersManager != null)
@@ -712,7 +587,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         Log.d("HayaiLauncher", "Hayai is ded");
         super.onDestroy();
     }
-
     public void showPopup(View v) {
         final PopupMenu popup = new PopupMenu(this, v);
         popup.setOnMenuItemClickListener(new PopupEventListener());
@@ -720,18 +594,14 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         inflater.inflate(R.menu.search_activity_menu, popup.getMenu());
         popup.show();
     }
-
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        
         if (key.equals("package_changed_name") && !sharedPreferences.getString(key, "").isEmpty()) {
             handlePackageChanged();
         } else if (key.equals("pref_app_preferred_order")) {
             String order = mSharedPreferences.getString("pref_app_preferred_order", "recent");
             mShouldOrderByUsages = order.equals("usage");
             mShouldOrderByRecents = order.equals("recent");
-
-            
             sortApps();
             mArrayAdapter.notifyDataSetChanged();
         } else if (key.equals("pref_disable_icons")) {
@@ -739,9 +609,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         } else if (key.equals("pref_autokeyboard")) {
             mAutoKeyboard = mSharedPreferences.getBoolean("pref_autokeyboard", false);
         }
-
     }
-
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_MENU) {
             showPopup(mOverflowButtonTopleft);
@@ -749,22 +617,18 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         }
         return super.onKeyUp(keyCode, event);
     }
-
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         if (!mIsCacheClear && level == TRIM_MEMORY_COMPLETE)
             clearCaches();
-
     }
-
     private void clearCaches() {
         mIsCacheClear = true;
         for (LaunchableActivity launchableActivity : mActivityInfos) {
             launchableActivity.deleteActivityIcon();
         }
     }
-
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
                                     ContextMenuInfo menuInfo) {
@@ -778,10 +642,8 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
         final MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.app, menu);
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        
         switch (item.getItemId()) {
             case R.id.action_settings:
                 final Intent intentSettings = new Intent(this, SettingsActivity.class);
@@ -812,7 +674,6 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 return super.onOptionsItemSelected(item);
         }
     }
-
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
@@ -834,7 +695,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 return true;
             case R.id.appmenu_onplaystore:
                 final Intent intentPlayStore = new Intent(Intent.ACTION_VIEW);
-                intentPlayStore.setData(Uri.parse("market://details?id=" +
+                intentPlayStore.setData(Uri.parse("market://details?id="
                         launchableActivity.getComponent().getPackageName()));
                 startActivity(intentPlayStore);
                 return true;
@@ -848,16 +709,11 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             default:
                 return false;
         }
-
     }
-
     public void onClickSettingsButton(View view) {
         showPopup(mOverflowButtonTopleft);
-
     }
-
     public void launchActivity(final LaunchableActivity launchableActivity) {
-
         hideKeyboard();
         try {
             startActivity(launchableActivity.getLaunchIntent(mSearchEditText.getText().toString()));
@@ -868,49 +724,37 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
             sortApps();
             mArrayAdapter.notifyDataSetChanged();
         } catch (ActivityNotFoundException e) {
-            
-            
             Toast.makeText(mContext, getString(R.string.activity_not_found),
                     Toast.LENGTH_SHORT).show();
         }
-
     }
-
     public void onClickClearButton(View view) {
         mSearchEditText.setText("");
     }
-
     class PopupEventListener implements PopupMenu.OnMenuItemClickListener {
         @Override
         public boolean onMenuItemClick(MenuItem item) {
             return onOptionsItemSelected(item);
         }
     }
-
     class ActivityInfoArrayAdapter extends ArrayAdapter<LaunchableActivity> {
         final LayoutInflater inflater;
-
         public ActivityInfoArrayAdapter(final Context context, final int resource,
                                         final List<LaunchableActivity> activityInfos) {
-
             super(context, resource, activityInfos);
             inflater = getLayoutInflater();
         }
-
         @Override
         public int getCount() {
             return super.getCount() + mColumnCount;
         }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-
             final View view =
                     convertView != null ?
                             convertView : inflater.inflate(R.layout.app_grid_item, parent, false);
             final AbsListView.LayoutParams params =
                     (AbsListView.LayoutParams) view.getLayoutParams();
-
             if (position < mColumnCount) {
                 params.height = mGridViewTopRowHeight;
                 view.setLayoutParams(params);
@@ -929,9 +773,7 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                 final ImageView appIconView = (ImageView) view.findViewById(R.id.appIcon);
                 final View appShareIndicator = view.findViewById(R.id.appShareIndicator);
                 final View appPinToTop = view.findViewById(R.id.appPinToTop);
-
                 appLabelView.setText(label);
-
                 appIconView.setTag(launchableActivity);
                 if (!launchableActivity.isIconLoaded()) {
                     appIconView.setImageDrawable(mDefaultAppIcon);
@@ -947,11 +789,8 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
                         launchableActivity.isShareable() ? View.VISIBLE : View.GONE);
                 appPinToTop.setVisibility(
                         launchableActivity.getPriority() > 0 ? View.VISIBLE : View.GONE);
-
             }
             return view;
         }
-
     }
-
 }
