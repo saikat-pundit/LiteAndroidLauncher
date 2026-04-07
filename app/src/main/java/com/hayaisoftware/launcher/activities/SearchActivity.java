@@ -1,4 +1,9 @@
 package com.hayaisoftware.launcher.activities;
+
+import android.view.MotionEvent;
+import android.os.SystemClock;
+import android.app.admin.DevicePolicyManager;
+import android.os.PowerManager;
 import com.hayaisoftware.launcher.RebootReceiver;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -317,6 +322,20 @@ public class SearchActivity extends Activity
             }
         }
     }
+    private void lockScreen() {
+    DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+    ComponentName adminComponent = new ComponentName(this, LauncherDeviceAdminReceiver.class);
+    
+    if (dpm.isAdminActive(adminComponent)) {
+        dpm.lockNow();
+    } else {
+        // Fallback: use PowerManager if device admin not active
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            pm.goToSleep(SystemClock.uptimeMillis());
+        }
+    }
+}            
     public int setPaddingHeights() {
         // 1. Change this from 2 to 1 to drastically reduce the top gap
         int statusBarPaddings = 1; 
@@ -395,6 +414,21 @@ public class SearchActivity extends Activity
 
             }
         });
+        // Add touch listener for empty space to lock screen
+mAppListView.setOnTouchListener(new View.OnTouchListener() {
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            // Check if touch is on empty space (not on a child view)
+            int position = ((GridView) mAppListView).pointToPosition((int) event.getX(), (int) event.getY());
+            if (position == AdapterView.INVALID_POSITION) {
+                lockScreen();
+                return true;
+            }
+        }
+        return false;
+    }
+});    
         //noinspection unchecked
         mAppListView.setAdapter(mArrayAdapter);
 
