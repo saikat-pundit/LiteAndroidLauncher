@@ -1,5 +1,7 @@
 package com.hayaisoftware.launcher.activities;
 
+import android.app.KeyguardManager;
+import android.annotation.TargetApi;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.security.keystore.KeyGenParameterSpec;
@@ -474,7 +476,7 @@ private void unlockDevice() {
         // This doesn't directly unlock - you'd need to dismiss the keyguard
         // For full unlock, you need to use KeyguardManager
         KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= 26) {
             // On Android 8+, you can show authentication prompt
             Intent intent = km.createConfirmDeviceCredentialIntent(null, null);
             if (intent != null) {
