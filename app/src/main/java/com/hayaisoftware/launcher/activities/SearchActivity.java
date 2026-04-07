@@ -575,6 +575,15 @@ mAppListView.setOnTouchListener(new View.OnTouchListener() {
     private void hideKeyboard() {
         mInputMethodManager.hideSoftInputFromWindow(mSearchEditText.getWindowToken(), 0);
     }
+        private void wakeDevice() {
+    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    PowerManager.WakeLock wakeLock = pm.newWakeLock(
+        PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+        "HayaiLauncher:WAKE_LOCK"
+    );
+    wakeLock.acquire(2000);
+    wakeLock.release();
+}
     private void handlePackageChanged() {
         final SharedPreferences.Editor editor = mSharedPreferences.edit();
         final String[] packageChangedNames = mSharedPreferences.getString("package_changed_name", "")
