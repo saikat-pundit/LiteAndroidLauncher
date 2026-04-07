@@ -135,7 +135,6 @@ private boolean isAuthenticating = false;
         private Handler mDoubleTapHandler = new Handler();
         private Runnable mDoubleTapRunnable;
         private static final int DOUBLE_TAP_TIMEOUT = 1000;
-                private FingerprintManager mFingerprintManager;
 private CancellationSignal mFingerprintCancellationSignal;
 private boolean mIsListeningForFingerprint = false;
     private BroadcastReceiver mPackageChangedReceiver;
